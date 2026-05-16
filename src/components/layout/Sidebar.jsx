@@ -9,8 +9,16 @@ import {
   IconDownload,
   IconSettings,
 } from "@tabler/icons-react";
-
+import { NavLink } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+const platforms = [
+  { name: "Meroshare", slug: "meroshare", color: "bg-emerald-500" },
+  { name: "CommBank", slug: "commbank", color: "bg-blue-500" },
+  { name: "CommSec Pocket", slug: "commsecpocket", color: "bg-blue-500" },
+  { name: "Webull", slug: "webull", color: "bg-blue-500" },
+];
 export default function Sidebar() {
+     const { platform } = useParams();
   return (
     <aside className="w-[210px] bg-[#1d3354] border-r border-white/10 flex flex-col">
 
@@ -31,43 +39,68 @@ export default function Sidebar() {
 
         <div className="px-5 text-[10px] uppercase mb-2">Overview</div>
 
-        <div className="flex items-center gap-2 px-5 py-2 bg-[#1a6bbc]/20 border-l-2 border-[#2e82d8] text-[#2e82d8]">
+         <NavLink
+          to="/"
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-4 py-2 text-sm border-l-2 transition ${
+              isActive
+                ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                : "border-transparent text-gray-300 hover:bg-white/5"
+            }`
+          }
+        >
           <IconHome size={16} />
-          Dashboard
-        </div>
 
-        <div className="flex items-center gap-2 px-5 py-2 hover:bg-white/5">
-          <IconChartPie size={16} />
+          Dashboard
+        </NavLink>
+
+        <NavLink
+          to="/analytics"
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-4 py-2 text-sm border-l-2 transition ${
+              isActive
+                ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                : "border-transparent text-gray-300 hover:bg-white/5"
+            }`
+          }
+        >
+            <IconChartPie size={16} />
           Analytics
-        </div>
+        </NavLink>
         <div className="px-5 text-[10px] uppercase mt-4 mb-2">Holdings</div>
-        <div className="flex items-center gap-2 px-5 py-2 hover:bg-white/5">
-          <IconBriefcase size={16} />
-          All Holdings
-        </div>
-               <div className="pl-8 py-1 text-xs text-[#8fa3bf] hover:bg-white/5">
-              CommBank
-            </div>
-              <div className="pl-8 py-1 text-xs text-[#8fa3bf] hover:bg-white/5">
-              Commsec
-            </div>
-             <div className="pl-8 py-1 text-xs text-[#8fa3bf] hover:bg-white/5">
-              Webull
-            </div>
-             <div className="pl-8 py-1 text-xs text-[#8fa3bf] hover:bg-white/5">
-              NEPSE
-            </div>    
+      
+      {platforms.map((p) => (
+        <Link
+          key={p.slug}
+          to={`/portfolio/${p.slug}`}
+          className={`flex items-center gap-2 px-4 py-2 text-sm
+            ${
+              platform === p.slug
+                ? "bg-white/10 text-white"
+                : "text-slate-400 hover:bg-white/5"
+            }`}
+        >
+          <span className={`h-2 w-2 rounded-full ${p.color}`} />
+          {p.name}
+        </Link>
+      ))}
+    
         <div className="px-5 text-[10px] uppercase mt-4 mb-2">Trading</div>
         
-        <div className="flex items-center gap-2 px-5 py-2 hover:bg-white/5">
-          <IconBriefcase size={16} />
-          Trade Journal
-        </div>
 
-        <div className="flex items-center gap-2 px-5 py-2 hover:bg-white/5">
-          <IconEye size={16} />
+        <NavLink
+          to="/watchlist"
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-4 py-2 text-sm border-l-2 transition ${
+              isActive
+                ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                : "border-transparent text-gray-300 hover:bg-white/5"
+            }`
+          }
+        >
+            <IconEye size={16} />
           Watchlist
-        </div>
+        </NavLink>
 
         <div className="px-5 text-[10px] uppercase mt-4 mb-2">Tools</div>
 
