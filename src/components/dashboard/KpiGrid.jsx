@@ -1,39 +1,38 @@
-
-
+// KpiGrid.jsx
 import KpiCard from "./KpiCard";
 import { IconWallet, IconCoins, IconTrendingUp, IconChartBar } from "@tabler/icons-react";
 
-export default function KpiGrid() {
+export default function KpiGrid({ overall, totalHoldings, totalPlatforms }) {
+  if (!overall) return null;
+
+  const { currency, invested, current, profit, returnPercent } = overall;
+
   return (
     <div className="grid grid-cols-4 gap-4 mb-5">
-
       <KpiCard
         title="Total Value"
-        value="AUD 1,968"
-        sub="≈ NPR 218,076"
+        value={`${currency} ${current.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        sub={`${returnPercent > 0 ? "+" : ""}${returnPercent}% overall return`}
         icon={<IconWallet size={16} />}
         accent
       />
-
       <KpiCard
         title="Total Invested"
-        value="AUD 1,614"
-        sub="Across 4 platforms"
+        value={`${currency} ${invested.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        sub={`Across ${totalPlatforms} platforms`}
         icon={<IconCoins size={16} />}
       />
-
       <KpiCard
         title="Total Gain"
-        value="+AUD 354"
-        sub="+21.9% overall return"
+        value={`${profit >= 0 ? "+" : ""}${currency} ${Math.abs(profit).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        sub={`${returnPercent >= 0 ? "+" : ""}${returnPercent}% overall return`}
         icon={<IconTrendingUp size={16} />}
-        accent
+        accent={profit >= 0}
       />
-
       <KpiCard
         title="Holdings"
-        value="19"
-        sub="4 platforms · 3 currencies"
+        value={String(totalHoldings)}
+        sub={`${totalPlatforms} platforms · 3 currencies`}
         icon={<IconChartBar size={16} />}
       />
     </div>

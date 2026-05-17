@@ -1,50 +1,36 @@
-
-
+// PlatformTable.jsx
 import { IconChevronRight } from "@tabler/icons-react";
+import { useNavigate } from "react-router-dom";
 
-export default function PlatformTable() {
-  const data = [
-    {
-      name: "CommBank",
-      color: "#1a6bbc",
-      ccy: "AUD",
-      invested: "572.40",
-      value: "578.60",
-      gain: "+6.20",
-      return: "+1.1%",
-      positive: true,
-    },
-    {
-      name: "CommSec Pocket",
-      color: "#2e82d8",
-      ccy: "AUD",
-      invested: "212.64",
-      value: "224.21",
-      gain: "+11.57",
-      return: "+5.4%",
-      positive: true,
-    },
-    {
-      name: "Webull",
-      color: "#0ea5e9",
-      ccy: "USD",
-      invested: "247.63",
-      value: "559.64",
-      gain: "+312.01",
-      return: "+126.0%",
-      positive: true,
-    },
-    {
-      name: "Meroshare",
-      color: "#00c896",
-      ccy: "NPR",
-      invested: "64413.70",
-      value: "67101.90",
-      gain: "+2688.20",
-      return: "+4.2%",
-      positive: true,
-    },
-  ];
+const PLATFORM_COLORS = {
+  CommBank:      "#1a6bbc",
+  "CommSec Pocket": "#2e82d8",
+  Webull:        "#0ea5e9",
+  Meroshare:     "#00c896",
+};
+
+const PLATFORM_ROUTES = {
+  CommBank:         "commbank",
+  "CommSec Pocket": "commsecpocket",
+  Webull:           "webull",
+  Meroshare:        "meroshare",
+};
+
+export default function PlatformTable({ platforms }) {
+  const navigate = useNavigate();
+
+  if (!platforms) return null;
+
+  const rows = Object.values(platforms).map((p) => ({
+    name: p.name,
+    color: PLATFORM_COLORS[p.name] || "#888",
+    ccy: p.currency,
+    invested: p.summary.invested.toFixed(2),
+    value: p.summary.current.toFixed(2),
+    gain: p.summary.profit,
+    returnPercent: p.summary.returnPercent,
+    route: PLATFORM_ROUTES[p.name],
+  }));
 
   return (
     <div>
@@ -52,7 +38,6 @@ export default function PlatformTable() {
         <h2 className="text-xs uppercase text-[#8fa3bf] font-semibold">
           Platform Breakdown
         </h2>
-
         <button className="text-xs text-[#2e82d8] flex items-center gap-1">
           View all <IconChevronRight size={14} />
         </button>
@@ -70,32 +55,25 @@ export default function PlatformTable() {
               <th className="text-right p-3">Return</th>
             </tr>
           </thead>
-
           <tbody>
-            {data.map((p, i) => (
+            {rows.map((p, i) => (
               <tr
                 key={i}
-                className="border-b border-white/5 hover:bg-white/5"
+                className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
+                onClick={() => navigate(`/portfolio/${p.route}`)}
               >
                 <td className="p-3 flex items-center gap-2">
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ background: p.color }}
-                  />
+                  <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
                   {p.name}
                 </td>
-
                 <td className="p-3 text-[#8fa3bf]">{p.ccy}</td>
-
                 <td className="p-3 text-right">{p.invested}</td>
                 <td className="p-3 text-right">{p.value}</td>
-
-                <td className="p-3 text-right text-[#00c896]">
-                  {p.gain}
+                <td className={`p-3 text-right ${p.gain >= 0 ? "text-[#00c896]" : "text-red-400"}`}>
+                  {p.gain >= 0 ? "+" : ""}{p.gain.toFixed(2)}
                 </td>
-
-                <td className="p-3 text-right text-[#00c896]">
-                  {p.return}
+                <td className={`p-3 text-right ${p.returnPercent >= 0 ? "text-[#00c896]" : "text-red-400"}`}>
+                  {p.returnPercent >= 0 ? "+" : ""}{p.returnPercent}%
                 </td>
               </tr>
             ))}
