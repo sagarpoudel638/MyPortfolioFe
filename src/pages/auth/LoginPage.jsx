@@ -9,6 +9,7 @@ import {
   IconDownload, IconCircleCheck,
 } from "@tabler/icons-react";
 
+
 export default function LoginPage() {
   const { loginUser } = useAuth();
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function LoginPage() {
 
   const verified = searchParams.get("verified");
   const justRegistered = searchParams.get("registered");
-
+  const reset = searchParams.get("reset");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -106,6 +107,12 @@ export default function LoginPage() {
               Account created. Please check your email to verify your account.
             </div>
           )}
+          {reset === "true" && (
+  <div className="bg-[#00c896]/10 border border-[#00c896]/30 rounded-lg px-3 py-2 text-xs text-[#00c896] mb-4 flex items-center gap-2">
+    <IconCircleCheck size={14} />
+    Password reset successfully. You can now sign in.
+  </div>
+)}
 
           {/* Error — amber for unverified, red for everything else */}
           {error && (
@@ -174,7 +181,12 @@ export default function LoginPage() {
             </button>
 
           </form>
-
+<Link
+  to="/forgot-password"
+  className="text-right text-[11px] text-[#2e82d8] hover:underline mb-1 block"
+>
+  Forgot password?
+</Link>
           <p className="text-center text-[11px] text-[#5d7a9a] mt-4">
             No account?{" "}
             <Link to="/register" className="text-[#2e82d8] hover:underline">Create one</Link>
