@@ -477,30 +477,31 @@ export default function SettingsPage() {
 
   return (
     <AppLayout title="Settings">
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
 
         {/* Sidebar tabs */}
-        <div className="w-48 shrink-0">
-          <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition border-b border-white/5 last:border-0 ${
-                  activeTab === tab.key
-                    ? "bg-[#1a6bbc]/20 text-white border-l-2 border-l-[#1a6bbc]"
-                    : "text-[#8fa3bf] hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-                {activeTab === tab.key && (
-                  <IconChevronRight size={14} className="ml-auto" />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+        <div className="md:w-48 shrink-0">
+  <div className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible bg-white/5 border border-white/10 rounded-xl p-1 md:p-0">
+    {TABS.map((tab) => (
+      <button
+        key={tab.key}
+        onClick={() => setActiveTab(tab.key)}
+        className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 text-sm rounded-lg md:rounded-none transition whitespace-nowrap flex-shrink-0
+          md:border-b md:border-white/5 md:last:border-0 ${
+          activeTab === tab.key
+            ? "bg-[#1a6bbc]/20 text-white md:border-l-2 md:border-l-[#1a6bbc]"
+            : "text-[#8fa3bf] hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        {tab.icon}
+        {tab.label}
+        {activeTab === tab.key && (
+          <IconChevronRight size={14} className="ml-auto hidden md:block" />
+        )}
+      </button>
+    ))}
+  </div>
+</div>
 
         {/* Content panel */}
         <div className="flex-1 bg-white/5 border border-white/10 rounded-xl p-6">

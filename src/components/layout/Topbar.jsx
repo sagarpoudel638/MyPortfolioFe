@@ -1,17 +1,24 @@
-export default function Topbar({
-  title,
-  actions,
-}) {
+import { IconMenu2 } from "@tabler/icons-react";
+
+export default function Topbar({ title, actions, onMenuClick }) {
   return (
-    <div className="flex items-center justify-between border-b border-white/10 bg-[#162741] px-5 py-3">
+    <div className="flex items-center justify-between border-b border-white/10 bg-[#162741] px-4 py-3 gap-3">
 
-      <h1 className="text-lg font-semibold">
-        {title}
-      </h1>
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden text-[#5d7a9a] hover:text-white transition shrink-0"
+      >
+        <IconMenu2 size={20} />
+      </button>
 
-      <div className="flex items-center gap-2">
-        {actions}
-      </div>
+      <h1 className="text-base font-semibold flex-1 truncate">{title}</h1>
+
+      {actions && (
+        <div className="flex items-center gap-2 shrink-0">
+          {actions}
+        </div>
+      )}
 
     </div>
   );

@@ -11,7 +11,8 @@ export default function HoldingsTable({
   const isPortfolio = mode === "portfolio";
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/5">
+  <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/5">
+    <div className="min-w-[700px]">
       <table className="w-full text-sm">
 
         {/* HEADER */}
@@ -128,5 +129,6 @@ export default function HoldingsTable({
 
       </table>
     </div>
-  );
+  </div>
+);
 }

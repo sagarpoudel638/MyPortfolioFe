@@ -196,7 +196,7 @@ export default function PortfolioPage() {
     >
 
       {/* KPI Section */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl border border-white/10 bg-white/5 p-4">
           <p className="text-xs text-slate-400">Invested ({meta.currency})</p>
           <h2 className="text-xl font-mono font-semibold">

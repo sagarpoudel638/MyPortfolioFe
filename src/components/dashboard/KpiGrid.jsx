@@ -8,7 +8,7 @@ export default function KpiGrid({ overall, totalHoldings, totalPlatforms }) {
   const { currency, invested, current, profit, returnPercent } = overall;
 
   return (
-    <div className="grid grid-cols-4 gap-4 mb-5">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5">
       <KpiCard
         title="Total Value"
         value={`${currency} ${current.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}

@@ -12,6 +12,7 @@ import {
 import { NavLink, Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { logout } from "../../api/auth";
+import { IconX } from "@tabler/icons-react";
 
 const platforms = [
   { name: "Meroshare",      slug: "meroshare",      color: "bg-emerald-500" },
@@ -20,7 +21,7 @@ const platforms = [
   { name: "Webull",         slug: "webull",          color: "bg-blue-500" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }) {
   const { platform } = useParams();
   const { user, logoutUser } = useAuth();
   const navigate = useNavigate();
@@ -44,17 +45,24 @@ export default function Sidebar() {
   const initials = displayName.charAt(0).toUpperCase();
 
   return (
-    <aside className="w-[210px] bg-[#1d3354] border-r border-white/10 flex flex-col">
+    <aside className="w-[210px] h-full bg-[#1d3354] border-r border-white/10 flex flex-col">
 
       {/* Logo */}
       <div className="p-4 border-b border-white/10 flex items-center gap-3">
         <div className="w-7 h-7 rounded-lg bg-[#00c896] flex items-center justify-center">
           <IconChartLine size={16} />
         </div>
-        <div>
+        <div className="flex-1">
           <div className="text-sm font-semibold">PortfolioTracker</div>
           <div className="text-[10px] text-[#5d7a9a]">Personal</div>
         </div>
+        {/* Close button — mobile only */}
+        <button
+          onClick={onClose}
+          className="lg:hidden text-[#5d7a9a] hover:text-white transition"
+        >
+          <IconX size={16} />
+        </button>
       </div>
 
       {/* Nav */}
