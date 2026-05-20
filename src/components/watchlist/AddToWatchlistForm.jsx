@@ -3,18 +3,19 @@ import { useState } from "react";
 
 const EXCHANGES = ["ASX", "NYSE", "NASDAQ", "NEPSE"];
 
-export default function AddToWatchlistForm({ ticker, exchange, onSubmit, onCancel, loading }) {
+export default function AddToWatchlistForm({ ticker, exchange, initial, onSubmit, onCancel, loading }) {
   const isFromHolding = !!ticker; // came from eye button — ticker/exchange pre-filled
 
-  const [form, setForm] = useState({
-    symbol:              ticker || "",
-    exchange:            exchange || "",
-    action:              "Buy",
-    priority:            "Medium",
-    notes:               "",
-    priceAlertThreshold: "",
-    alertDirection:      "",
-  });
+const [form, setForm] = useState({
+  symbol:              ticker || "",
+  exchange:            exchange || "",
+  action:              initial?.action      || "Buy",
+  priority:            initial?.priority    || "Medium",
+  notes:               initial?.notes       || "",
+  priceAlertThreshold: initial?.targetPrice || "",
+  alertDirection:      initial?.alertDirection || "",
+  plannedQty:          initial?.plannedQty  || "",  // ← add
+});
   const [error, setError] = useState(null);
 
   const set = (field, value) => {
@@ -38,14 +39,15 @@ export default function AddToWatchlistForm({ ticker, exchange, onSubmit, onCance
     e.preventDefault();
     if (!validate()) return;
     onSubmit({
-      symbol:              form.symbol.toUpperCase().trim(),
-      exchange:            form.exchange,
-      action:              form.action,
-      priority:            form.priority,
-      notes:               form.notes,
-      priceAlertThreshold: form.priceAlertThreshold ? parseFloat(form.priceAlertThreshold) : null,
-      alertDirection:      form.alertDirection || null,
-    });
+  symbol:              form.symbol.toUpperCase().trim(),
+  exchange:            form.exchange,
+  action:              form.action,
+  priority:            form.priority,
+  notes:               form.notes,
+  priceAlertThreshold: form.priceAlertThreshold ? parseFloat(form.priceAlertThreshold) : null,
+  alertDirection:      form.alertDirection || null,
+  plannedQty:          form.plannedQty ? parseFloat(form.plannedQty) : null, // ← add
+});
   };
 
   const inputClass =
@@ -140,7 +142,22 @@ export default function AddToWatchlistForm({ ticker, exchange, onSubmit, onCance
           </select>
         </div>
       </div>
-
+{/* Planned Units —  */}
+<div>
+  <Label>Planned Units (optional)</Label>
+  <input
+    type="number"
+    value={form.plannedQty}
+    onChange={(e) => set("plannedQty", e.target.value)}
+    placeholder="How many units to buy/sell"
+    step="any"
+    min="0"
+    className={inputClass}
+  />
+  <p className="text-[10px] text-[#5d7a9a] mt-1">
+    Used to calculate cost or P&L in the watchlist
+  </p>
+</div>
       {/* Notes */}
       <div>
         <Label>Notes (optional)</Label>

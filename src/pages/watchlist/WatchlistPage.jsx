@@ -1,52 +1,48 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppLayout from "../../components/layout/AppLayout";
-import WatchlistHeader from "../../components/watchlist/WatchlistHeader";
-import WatchlistCard from "../../components/watchlist/WatchlistCard";
-import InfoBox from "../../components/watchlist/InfoBox";
 import Modal from "../../components/ui/Modal";
 import AddToWatchlistForm from "../../components/watchlist/AddToWatchlistForm";
-import { getWatchlist, createWatchlistItem, deleteWatchlistItem, updateWatchlistItem, getWatchlistPrices } from "../../api/watchlist";
+import WatchlistTabs from "../../components/watchlist/WatchlistTabs";
+import { IconPlus, IconRefresh } from "@tabler/icons-react";
+import {
+  getEnrichedWatchlist, createWatchlistItem,
+  updateWatchlistItem, deleteWatchlistItem,
+} from "../../api/watchlist";
 
 export default function WatchlistPage() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [items, setItems]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(null);
+  const [activeTab, setActiveTab] = useState("Buy");
   const [modalOpen, setModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
+  const [saving, setSaving]       = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-  const [prices, setPrices] = useState({});
+  const [deleting, setDeleting]   = useState(false);
 
- const fetchWatchlist = async () => {
-  try {
-    setLoading(true);
-    const { data } = await getWatchlist();
-    setItems(data);
-
-    // Fetch prices after items load
-    if (data.length > 0) {
-      try {
-        const { data: priceData } = await getWatchlistPrices();
-        setPrices(priceData);
-      } catch {
-        // Prices failing shouldn't break the watchlist
-      }
+  const fetchItems = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await getEnrichedWatchlist();
+      setItems(data);
+    } catch {
+      setError("Failed to load watchlist");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError("Failed to load watchlist");
-  } finally {
-    setLoading(false);
-  }
-};
+  }, []);
 
-  useEffect(() => { fetchWatchlist(); }, []);
+  useEffect(() => { fetchItems(); }, []);
+
+  const buyItems  = items.filter((i) => i.action === "Buy");
+  const sellItems = items.filter((i) => i.action === "Sell");
 
   const handleAdd = async (formData) => {
     setSaving(true);
     try {
       await createWatchlistItem(formData);
       setModalOpen(false);
-      await fetchWatchlist();
+      await fetchItems();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to add item");
     } finally {
@@ -54,66 +50,37 @@ export default function WatchlistPage() {
     }
   };
 
+  const handleEdit = async (formData) => {
+    setSaving(true);
+    try {
+      await updateWatchlistItem(editTarget._id, formData);
+      setEditTarget(null);
+      setModalOpen(false);
+      await fetchItems();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleDelete = async () => {
-    if (!deleteTarget) return;
     setDeleting(true);
     try {
       await deleteWatchlistItem(deleteTarget._id);
       setDeleteTarget(null);
-      await fetchWatchlist();
-    } catch (err) {
-      alert("Failed to delete item");
+      await fetchItems();
+    } catch {
+      alert("Failed to delete");
     } finally {
       setDeleting(false);
     }
   };
 
-  const handleToggleAlert = async (item) => {
-    try {
-      await updateWatchlistItem(item._id, {
-        alertTriggered: !item.alertTriggered,
-      });
-      await fetchWatchlist();
-    } catch {
-      // fail silently
-    }
+  const openEdit = (item) => {
+    setEditTarget(item);
+    setModalOpen(true);
   };
-
-  // Split into buy and sell
-  const buyItems = items.filter((i) => i.action === "Buy");
-  const sellItems = items.filter((i) => i.action === "Sell");
-
-  // Find high priority sell items with alerts for InfoBox
-  const highPrioritySells = sellItems.filter(
-    (i) => i.priority === "High" && i.priceAlertThreshold
-  );
-
-  // Map API data to the shape WatchlistItem expects
-  const mapItem = (item) => {
-  const priceKey = `${item.exchange}:${item.symbol}`;
-  const priceData = prices[priceKey];
-  const livePrice = priceData?.price ?? null;
-
-  // Check if alert has been triggered
-  const alertHit = item.priceAlertThreshold && livePrice !== null
-    ? item.alertDirection === "above"
-      ? livePrice >= item.priceAlertThreshold
-      : livePrice <= item.priceAlertThreshold
-    : false;
-
-  return {
-    ...item,
-    symbol:    item.symbol,
-    name:      item.name || item.symbol,
-    livePrice,
-    dayPct:    priceData?.dayPercent ?? null,
-    alert: item.priceAlertThreshold
-      ? `${item.alertDirection === "above" ? "≥" : "≤"} ${item.priceAlertThreshold}`
-      : "No alert",
-    priority:  item.priority?.toLowerCase(),
-    alertHit,
-  };
-};
 
   if (error) {
     return (
@@ -124,70 +91,53 @@ export default function WatchlistPage() {
   }
 
   return (
-    <AppLayout title="Watchlist">
-      <div className="space-y-6">
-
-        <WatchlistHeader
-          onAdd={() => setModalOpen(true)}
-          loading={loading}
+    <AppLayout
+      title="Watchlist"
+      actions={
+        <div className="flex items-center gap-3">
+          <button
+            onClick={fetchItems}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-sm disabled:opacity-50"
+          >
+            <IconRefresh size={16} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+          <button
+            onClick={() => { setEditTarget(null); setModalOpen(true); }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#1a6bbc] hover:bg-[#2e82d8] text-white text-sm font-medium transition"
+          >
+            <IconPlus size={16} />
+            Add to Watchlist
+          </button>
+        </div>
+      }
+    >
+      {loading && !items.length ? (
+        <div className="text-center text-slate-400 py-20">Loading...</div>
+      ) : (
+        <WatchlistTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          buyItems={buyItems}
+          sellItems={sellItems}
+          onEdit={openEdit}
+          onDelete={setDeleteTarget}
         />
+      )}
 
-        {loading && !items.length ? (
-          <div className="text-center text-slate-400 py-20">Loading...</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-
-            {/* BUY */}
-            <div>
-              <WatchlistCard
-                title="Stocks to Buy"
-                icon="ti ti-trending-up"
-                color="text-emerald-400"
-                stocks={buyItems.map(mapItem)}
-                onDelete={(stock) => setDeleteTarget(stock)}
-              />
-              <InfoBox
-                icon="ti ti-info-circle text-emerald-400"
-                text="New NEPSE IPO listings appear here with no price until secondary market opens."
-              />
-            </div>
-
-            {/* SELL */}
-            <div className="space-y-5">
-              <div>
-                <WatchlistCard
-                  title="Stocks to Sell"
-                  icon="ti ti-trending-down"
-                  color="text-red-400"
-                  stocks={sellItems.map(mapItem)}
-                  onDelete={(stock) => setDeleteTarget(stock)}
-                />
-                {highPrioritySells.length > 0 && (
-                  <InfoBox
-                    icon="ti ti-alert-triangle"
-                    color="red"
-                    text={`${highPrioritySells.map((i) => i.symbol).join(", ")} ${
-                      highPrioritySells.length === 1 ? "is" : "are"
-                    } HIGH priority with price alerts set.`}
-                  />
-                )}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-      </div>
-
-      {/* Add Modal */}
+      {/* Add / Edit Modal */}
       <Modal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Add to Watchlist"
+        onClose={() => { setModalOpen(false); setEditTarget(null); }}
+        title={editTarget ? `Edit ${editTarget.symbol}` : "Add to Watchlist"}
       >
         <AddToWatchlistForm
-          onSubmit={handleAdd}
-          onCancel={() => setModalOpen(false)}
+          ticker={editTarget?.symbol}
+          exchange={editTarget?.exchange}
+          initial={editTarget}
+          onSubmit={editTarget ? handleEdit : handleAdd}
+          onCancel={() => { setModalOpen(false); setEditTarget(null); }}
           loading={saving}
         />
       </Modal>
@@ -219,7 +169,6 @@ export default function WatchlistPage() {
           </button>
         </div>
       </Modal>
-
     </AppLayout>
   );
 }
