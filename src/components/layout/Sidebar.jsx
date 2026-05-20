@@ -7,6 +7,7 @@ import {
   IconBell,
   IconDownload,
   IconLogout,
+  IconSettings
 } from "@tabler/icons-react";
 import { NavLink, Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -129,10 +130,21 @@ export default function Sidebar() {
           Notifications
         </div>
 
-        <div className="flex items-center gap-2 px-5 py-2 hover:bg-white/5 cursor-pointer">
-          <IconDownload size={16} />
-          Export
-        </div>
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-4 py-2 text-sm border-l-2 transition ${
+              isActive
+                ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                : "border-transparent text-gray-300 hover:bg-white/5"
+            }`
+          }
+          
+        >
+          <IconSettings size={16} />
+          Settings
+        </NavLink>
+        
 
       </nav>
 

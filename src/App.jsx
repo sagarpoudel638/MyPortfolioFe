@@ -9,6 +9,8 @@ import SignUpPage from "./pages/auth/SignUpPage";
 import VerifyEmailPage from "./pages/auth/VerifyEmailPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage  from "./pages/auth/ResetPasswordPage";
+import SettingsPage from "./pages/settings/SettingsPage";
+
 function App() {
   return (
     <BrowserRouter>
@@ -21,6 +23,7 @@ function App() {
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/watchlist" element={<ProtectedRoute><WatchlistPage /></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/portfolio/:platform" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
