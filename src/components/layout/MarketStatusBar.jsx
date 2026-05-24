@@ -71,7 +71,7 @@ export default function MarketStatusBar() {
   const fetchStatus = async () => {
     try {
       const { data } = await getMarketStatus();
-      setMarkets(data);
+      setMarkets(Array.isArray(data) ? data : []);
 
       // Initialise countdowns from server response
       const initial = {};
