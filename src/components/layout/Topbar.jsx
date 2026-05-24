@@ -1,4 +1,5 @@
 import { IconMenu2 } from "@tabler/icons-react";
+import MarketStatusBar from "./MarketStatusBar";
 
 export default function Topbar({ title, actions, onMenuClick }) {
   return (
@@ -13,6 +14,11 @@ export default function Topbar({ title, actions, onMenuClick }) {
       </button>
 
       <h1 className="text-base font-semibold flex-1 truncate">{title}</h1>
+
+      {/* Market status badges */}
+      <div className="hidden sm:flex items-center gap-2 shrink-0">
+        <MarketStatusBar />
+      </div>
 
       {actions && (
         <div className="flex items-center gap-2 shrink-0">
