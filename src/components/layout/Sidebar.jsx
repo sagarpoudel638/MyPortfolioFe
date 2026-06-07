@@ -14,11 +14,11 @@ import { useAuth } from "../../context/AuthContext";
 import { logout } from "../../api/auth";
 import { IconX } from "@tabler/icons-react";
 
-const platforms = [
-  { name: "Meroshare",      slug: "meroshare",      color: "bg-emerald-500" },
-  { name: "CommBank",       slug: "commbank",        color: "bg-blue-500" },
-  { name: "CommSec Pocket", slug: "commsecpocket",   color: "bg-blue-500" },
-  { name: "Webull",         slug: "webull",          color: "bg-blue-500" },
+const markets = [
+  { name: "NEPSE",  slug: "nepse",  color: "bg-emerald-500" },
+  { name: "ASX",    slug: "asx",    color: "bg-blue-500" },
+  { name: "NYSE",   slug: "nyse",   color: "bg-blue-400" },
+  { name: "NASDAQ", slug: "nasdaq", color: "bg-cyan-500" },
 ];
 
 export default function Sidebar({ onClose }) {
@@ -100,18 +100,18 @@ export default function Sidebar({ onClose }) {
 
         <div className="px-5 text-[10px] uppercase mt-4 mb-2">Holdings</div>
 
-        {platforms.map((p) => (
+        {markets.map((m) => (
           <Link
-            key={p.slug}
-            to={`/portfolio/${p.slug}`}
+            key={m.slug}
+            to={`/portfolio/${m.slug}`}
             className={`flex items-center gap-2 px-4 py-2 text-sm ${
-              platform === p.slug
+              platform === m.slug
                 ? "bg-white/10 text-white"
                 : "text-slate-400 hover:bg-white/5"
             }`}
           >
-            <span className={`h-2 w-2 rounded-full ${p.color}`} />
-            {p.name}
+            <span className={`h-2 w-2 rounded-full ${m.color}`} />
+            {m.name}
           </Link>
         ))}
 
