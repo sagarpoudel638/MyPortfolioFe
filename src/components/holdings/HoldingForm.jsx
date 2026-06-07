@@ -1,25 +1,18 @@
 // src/components/holdings/HoldingForm.jsx
 import { useState, useEffect } from "react";
 
-const PLATFORMS = ["CommBank", "CommSecPocket", "Webull", "Meroshare"];
+const MARKETS = ["ASX", "NYSE", "NASDAQ", "NEPSE"];
 
-const EXCHANGE_BY_PLATFORM = {
-  CommBank:      ["ASX"],
-  CommSecPocket: ["ASX"],
-  Webull:        ["NYSE", "NASDAQ"],
-  Meroshare:     ["NEPSE"],
-};
-
-const CURRENCY_BY_PLATFORM = {
-  CommBank:      "AUD",
-  CommSecPocket: "AUD",
-  Webull:        "USD",
-  Meroshare:     "NPR",
+const CURRENCY_BY_MARKET = {
+  ASX:    "AUD",
+  NYSE:   "USD",
+  NASDAQ: "USD",
+  NEPSE:  "NPR",
 };
 
 const EMPTY = {
-  platform:      "",
-  exchange:      "",
+  market:        "",
+  broker:        "",
   currency:      "",
   ticker:        "",
   name:          "",
@@ -35,17 +28,15 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState(initial || EMPTY);
   const [errors, setErrors] = useState({});
 
-  // When platform changes, auto-fill exchange and currency
+  // When market changes, auto-fill currency
   useEffect(() => {
-    if (form.platform) {
-      const exchanges = EXCHANGE_BY_PLATFORM[form.platform] || [];
+    if (form.market) {
       setForm((f) => ({
         ...f,
-        exchange: exchanges.length === 1 ? exchanges[0] : f.exchange,
-        currency: CURRENCY_BY_PLATFORM[form.platform] || f.currency,
+        currency: CURRENCY_BY_MARKET[form.market] || f.currency,
       }));
     }
-  }, [form.platform]);
+  }, [form.market]);
 
   const set = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -54,8 +45,7 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
 
   const validate = () => {
     const e = {};
-    if (!form.platform)     e.platform     = "Required";
-    if (!form.exchange)     e.exchange     = "Required";
+    if (!form.market)       e.market       = "Required";
     if (!form.ticker)       e.ticker       = "Required";
     if (!form.name)         e.name         = "Required";
     if (!form.qty)          e.qty          = "Required";
@@ -69,14 +59,20 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
     e.preventDefault();
     if (!validate()) return;
     onSubmit({
-      ...form,
-      ticker:    form.ticker.toUpperCase().trim(),
-      qty:       parseFloat(form.qty),
-      buyPrice:  parseFloat(form.buyPrice),
+      exchange:        form.market,  // backend uses exchange as the market key
+      broker:          form.broker,
+      currency:        form.currency,
+      ticker:          form.ticker.toUpperCase().trim(),
+      name:            form.name,
+      qty:             parseFloat(form.qty),
+      buyPrice:        parseFloat(form.buyPrice),
+      purchaseDate:    form.purchaseDate,
+      isFreeAllotment: form.isFreeAllotment,
+      isTracking:      form.isTracking,
+      notes:           form.notes,
     });
   };
 
-  const exchanges = form.platform ? EXCHANGE_BY_PLATFORM[form.platform] : [];
 
   const inputClass = (field) =>
     `w-full bg-white/5 border ${errors[field] ? "border-red-500/50" : "border-white/10"} 
@@ -100,35 +96,31 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-      {/* Row 1: Platform + Exchange */}
+      {/* Row 1: Market + Broker */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label error={errors.platform}>Platform</Label>
+          <Label error={errors.market}>Market</Label>
           <select
-            value={form.platform}
-            onChange={(e) => set("platform", e.target.value)}
-            className={selectClass("platform")}
+            value={form.market}
+            onChange={(e) => set("market", e.target.value)}
+            className={selectClass("market")}
           >
-            <option value="">Select platform</option>
-            {PLATFORMS.map((p) => (
-              <option key={p} value={p}>{p}</option>
+            <option value="">Select market</option>
+            {MARKETS.map((m) => (
+              <option key={m} value={m}>{m}</option>
             ))}
           </select>
         </div>
 
         <div>
-          <Label error={errors.exchange}>Exchange</Label>
-          <select
-            value={form.exchange}
-            onChange={(e) => set("exchange", e.target.value)}
-            className={selectClass("exchange")}
-            disabled={exchanges.length <= 1}
-          >
-            <option value="">Select exchange</option>
-            {exchanges.map((ex) => (
-              <option key={ex} value={ex}>{ex}</option>
-            ))}
-          </select>
+          <Label>Broker (optional)</Label>
+          <input
+            type="text"
+            value={form.broker}
+            onChange={(e) => set("broker", e.target.value)}
+            placeholder="e.g. CommBank, Webull"
+            className={inputClass("broker")}
+          />
         </div>
       </div>
 

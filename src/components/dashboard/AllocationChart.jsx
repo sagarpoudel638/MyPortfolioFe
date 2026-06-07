@@ -1,24 +1,20 @@
 // AllocationChart.jsx
-const PLATFORM_COLORS = {
-  CommBank:         "#1a6bbc",
-  "CommSec Pocket": "#2e82d8",
-  Webull:           "#0ea5e9",
-  Meroshare:        "#00c896",
+const MARKET_COLORS = {
+  ASX:    "#1a6bbc",
+  NYSE:   "#2e82d8",
+  NASDAQ: "#0ea5e9",
+  NEPSE:  "#00c896",
 };
 
 export default function AllocationChart({ platforms }) {
   if (!platforms) return null;
 
-  // Allocation by current value — each platform in its own currency
-  // We use the raw current values as weights (not AUD-converted)
-  // since we don't have per-platform AUD conversion here
-  // Dashboard passes platforms with summary.current in local currency
-  // For allocation % we use the overall AUD values passed from dashboard
-  const entries = Object.values(platforms).map((p) => ({
-    label: p.name,
-    value: p.summary.current,
-    color: PLATFORM_COLORS[p.name] || "#888",
-    currency: p.currency,
+  // platforms prop holds the markets object from the API
+  const entries = Object.values(platforms).map((m) => ({
+    label: m.name,
+    value: m.summary.current,
+    color: MARKET_COLORS[m.name] || "#888",
+    currency: m.currency,
   }));
 
   // Can only show meaningful % if same currency — use as relative weights
@@ -60,7 +56,7 @@ export default function AllocationChart({ platforms }) {
             return circle;
           })}
           <text x="60" y="62" textAnchor="middle" fontSize="8" fill="#8fa3bf">
-            4 platforms
+            {data.length} markets
           </text>
         </svg>
 

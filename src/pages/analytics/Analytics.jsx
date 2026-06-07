@@ -41,11 +41,11 @@ export default function Analytics() {
             <h2 className="text-xs uppercase text-gray-400 mb-3">
               Portfolio Allocation
             </h2>
-            <AllocationChart platforms={data?.platforms} />
+            <AllocationChart platforms={data?.markets} />
           </div>
 
           <CurrencyExposure
-  platforms={data?.platforms}
+  platforms={data?.markets}
   overall={data?.overall}
   fxRates={data?.fxRates}
 />
@@ -56,8 +56,8 @@ export default function Analytics() {
 
         {/* BOTTOM GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SectorBreakdown platforms={data?.platforms} />
-          <PlatformPnl platforms={data?.platforms} />
+          <SectorBreakdown platforms={data?.markets} />
+          <PlatformPnl platforms={data?.markets} />
         </div>
 
       </div>

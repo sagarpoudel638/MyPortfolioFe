@@ -15,8 +15,8 @@ export default function Dashboard() {
   }, []);
 
   const allHoldings = data
-    ? Object.values(data.platforms).flatMap((p) =>
-        p.holdings.map((h) => ({ ...h, platformName: p.name, currency: p.currency }))
+    ? Object.values(data.markets).flatMap((m) =>
+        m.holdings.map((h) => ({ ...h, marketName: m.name, currency: m.currency }))
       )
     : [];
 
@@ -56,13 +56,13 @@ export default function Dashboard() {
           <KpiGrid
             overall={data?.overall}
             totalHoldings={allHoldings.length}
-            totalPlatforms={Object.keys(data?.platforms || {}).length}
+            totalMarkets={Object.keys(data?.markets || {}).length}
           />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
   <div className="lg:col-span-2">
-    <PlatformTable platforms={data?.platforms} />
+    <PlatformTable platforms={data?.markets} />
   </div>
-  <AllocationChart platforms={data?.platforms} />
+  <AllocationChart platforms={data?.markets} />
 </div>
           <HoldingsTable mode="dashboard" holdings={allHoldings} />
         </>

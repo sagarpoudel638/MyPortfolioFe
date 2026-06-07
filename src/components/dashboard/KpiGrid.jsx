@@ -2,7 +2,7 @@
 import KpiCard from "./KpiCard";
 import { IconWallet, IconCoins, IconTrendingUp, IconChartBar } from "@tabler/icons-react";
 
-export default function KpiGrid({ overall, totalHoldings, totalPlatforms }) {
+export default function KpiGrid({ overall, totalHoldings, totalMarkets }) {
   if (!overall) return null;
 
   const { currency, invested, current, profit, returnPercent } = overall;
@@ -19,7 +19,7 @@ export default function KpiGrid({ overall, totalHoldings, totalPlatforms }) {
       <KpiCard
         title="Total Invested"
         value={`${currency} ${invested.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-        sub={`Across ${totalPlatforms} platforms`}
+        sub={`Across ${totalMarkets} markets`}
         icon={<IconCoins size={16} />}
       />
       <KpiCard
@@ -32,7 +32,7 @@ export default function KpiGrid({ overall, totalHoldings, totalPlatforms }) {
       <KpiCard
         title="Holdings"
         value={String(totalHoldings)}
-        sub={`${totalPlatforms} platforms · 3 currencies`}
+        sub={`${totalMarkets} markets · 3 currencies`}
         icon={<IconChartBar size={16} />}
       />
     </div>

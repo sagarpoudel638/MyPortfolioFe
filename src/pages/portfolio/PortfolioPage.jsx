@@ -12,23 +12,16 @@ import HoldingForm from "../../components/holdings/HoldingForm";
 import { getDashboard } from "../../api/dashboard";
 import { createHolding, updateHolding, deleteHolding } from "../../api/holdings";
 
-const PLATFORM_META = {
-  commbank:      { name: "CommBank",       currency: "AUD" },
-  commsecpocket: { name: "CommSec Pocket", currency: "AUD" },
-  webull:        { name: "Webull",         currency: "USD" },
-  meroshare:     { name: "Meroshare",      currency: "NPR" },
-};
-
-const PLATFORM_MAP = {
-  commbank:      "CommBank",
-  commsecpocket: "CommSecPocket",
-  webull:        "Webull",
-  meroshare:     "Meroshare",
+const MARKET_META = {
+  asx:    { name: "ASX",    currency: "AUD" },
+  nyse:   { name: "NYSE",   currency: "USD" },
+  nasdaq: { name: "NASDAQ", currency: "USD" },
+  nepse:  { name: "NEPSE",  currency: "NPR" },
 };
 
 export default function PortfolioPage() {
-  const { platform } = useParams();
-  const meta = PLATFORM_META[platform];
+  const { platform } = useParams(); // route param is still called :platform
+  const meta = MARKET_META[platform];
 
   const [platformData, setPlatformData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,7 +40,7 @@ export default function PortfolioPage() {
     try {
       setLoading(true);
       const { data } = await getDashboard();
-      setPlatformData(data.platforms[platform] ?? null);
+      setPlatformData(data.markets[platform] ?? null);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load portfolio");
     } finally {
@@ -95,11 +88,9 @@ export default function PortfolioPage() {
   const handleEdit = (h) => {
     setEditTarget({
       ...h,
-      // Format date for the date input
       purchaseDate: h.purchaseDate
         ? new Date(h.purchaseDate).toISOString().split("T")[0]
         : "",
-      platform: PLATFORM_MAP[platform],
     });
     setModalOpen(true);
   };
@@ -158,8 +149,8 @@ export default function PortfolioPage() {
   // Prepare initial values for edit form
   const editInitial = editTarget
     ? {
-        platform:        PLATFORM_MAP[platform],
-        exchange:        editTarget.exchange || "",
+        market:          meta.name,  // e.g. "ASX", "NYSE"
+        broker:          editTarget.broker || "",
         currency:        meta.currency,
         ticker:          editTarget.symbol || editTarget.ticker || "",
         name:            editTarget.name || "",

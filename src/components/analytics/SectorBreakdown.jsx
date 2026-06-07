@@ -1,7 +1,7 @@
 export default function SectorBreakdown({ platforms }) {
   if (!platforms) return null;
 
-  const meroshare = platforms.meroshare;
+  const meroshare = platforms.nepse;
   if (!meroshare) return null;
 
   const SECTOR_COLORS = {
