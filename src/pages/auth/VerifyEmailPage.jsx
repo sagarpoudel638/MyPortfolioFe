@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { IconChartLine, IconCircleCheck, IconCircleX, IconLoader2 } from "@tabler/icons-react";
-import axios from "axios";
+import client from "../../api/client";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
@@ -19,12 +19,11 @@ export default function VerifyEmailPage() {
       return;
     }
 
-    // Hit the backend verify endpoint directly
-    axios
-      .get(`http://localhost:3000/api/auth/verify-email?token=${token}`)
+    client
+      .get(`/auth/verify-email?token=${token}`)
       .then(() => {
-        // Backend redirects to /login?verified=true
-        // This won't actually run due to redirect
+        setStatus("success");
+        setTimeout(() => navigate("/login?verified=true"), 2500);
       })
       .catch((err) => {
         const msg = err.response?.data?.message || "Verification failed.";
@@ -46,6 +45,14 @@ export default function VerifyEmailPage() {
             <IconLoader2 size={40} className="text-[#2e82d8] animate-spin mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-white mb-2">Verifying your email...</h2>
             <p className="text-xs text-[#5d7a9a]">Please wait a moment.</p>
+          </>
+        )}
+
+        {status === "success" && (
+          <>
+            <IconCircleCheck size={40} className="text-[#00c896] mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-white mb-2">Email verified!</h2>
+            <p className="text-xs text-[#5d7a9a]">Redirecting you to login...</p>
           </>
         )}
 
