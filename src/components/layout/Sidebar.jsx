@@ -2,13 +2,11 @@ import {
   IconChartLine,
   IconHome,
   IconChartPie,
-  IconBriefcase,
   IconEye,
-  IconBell,
-  IconDownload,
   IconLogout,
   IconSettings
 } from "@tabler/icons-react";
+import NotificationPanel from "./NotificationPanel";
 import { NavLink, Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { logout } from "../../api/auth";
@@ -133,10 +131,7 @@ export default function Sidebar({ onClose }) {
 
         <div className="px-5 text-[10px] uppercase mt-4 mb-2">Tools</div>
 
-        <div className="flex items-center gap-2 px-5 py-2 hover:bg-white/5 cursor-pointer">
-          <IconBell size={16} />
-          Notifications
-        </div>
+        <NotificationPanel />
 
         <NavLink
           to="/settings"
