@@ -3,11 +3,12 @@ import {
   IconHome,
   IconChartPie,
   IconEye,
+  IconBell,
   IconLogout,
   IconSettings
 } from "@tabler/icons-react";
-import NotificationPanel from "./NotificationPanel";
 import { NavLink, Link, useParams, useNavigate } from "react-router-dom";
+import { useNotifications } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import { logout } from "../../api/auth";
 import { IconX } from "@tabler/icons-react";
@@ -22,6 +23,7 @@ const markets = [
 export default function Sidebar({ onClose }) {
   const { platform } = useParams();
   const { user, logoutUser } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -131,7 +133,24 @@ export default function Sidebar({ onClose }) {
 
         <div className="px-5 text-[10px] uppercase mt-4 mb-2">Tools</div>
 
-        <NotificationPanel />
+        <NavLink
+          to="/notifications"
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-4 py-2 text-sm border-l-2 transition ${
+              isActive
+                ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                : "border-transparent text-gray-300 hover:bg-white/5"
+            }`
+          }
+        >
+          <IconBell size={16} />
+          Notifications
+          {unreadCount > 0 && (
+            <span className="ml-auto bg-[#00c896] text-[#0d1f33] text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </NavLink>
 
         <NavLink
           to="/settings"
