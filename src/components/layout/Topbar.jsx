@@ -30,7 +30,6 @@ export default function Topbar({ title, actions, onMenuClick }) {
         )}
 
       </div>
-
       {/* Market status strip — mobile only */}
       <div className="flex sm:hidden px-4 pb-2">
         <MarketStatusBar />
