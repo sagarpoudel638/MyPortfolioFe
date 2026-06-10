@@ -5,7 +5,8 @@ import {
   IconEye,
   IconBell,
   IconLogout,
-  IconSettings
+  IconSettings,
+  IconArrowsExchange,
 } from "@tabler/icons-react";
 import { NavLink, Link, useParams, useNavigate } from "react-router-dom";
 import { useNotifications } from "../../context/NotificationContext";
@@ -150,6 +151,20 @@ export default function Sidebar({ onClose }) {
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
+        </NavLink>
+
+        <NavLink
+          to="/import"
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-4 py-2 text-sm border-l-2 transition ${
+              isActive
+                ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                : "border-transparent text-gray-300 hover:bg-white/5"
+            }`
+          }
+        >
+          <IconArrowsExchange size={16} />
+          Import / Export
         </NavLink>
 
         <NavLink

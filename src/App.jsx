@@ -11,6 +11,7 @@ import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage  from "./pages/auth/ResetPasswordPage";
 import SettingsPage from "./pages/settings/SettingsPage";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
+import ImportPage from "./pages/import/ImportPage";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/watchlist" element={<ProtectedRoute><WatchlistPage /></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/import" element={<ProtectedRoute><ImportPage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/portfolio/:platform" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
       </Routes>
