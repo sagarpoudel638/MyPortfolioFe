@@ -1,11 +1,12 @@
 // src/components/dashboard/HoldingsTable.jsx
-import { IconEdit, IconTrash, IconEye } from "@tabler/icons-react";
+import { IconEdit, IconTrash, IconEye, IconArrowDown } from "@tabler/icons-react";
 
 export default function HoldingsTable({
   mode = "dashboard",
   holdings = [],
   onEdit,
   onDelete,
+  onSell,
   onAddToWatchlist,
 }) {
   const isPortfolio = mode === "portfolio";
@@ -101,6 +102,14 @@ export default function HoldingsTable({
                         title="Edit"
                       >
                         <IconEdit size={16} />
+                      </button>
+
+                      <button
+                        onClick={() => onSell?.(h)}
+                        className="hover:bg-white/10 p-1 rounded text-amber-400 hover:text-amber-300 transition"
+                        title="Record Sale"
+                      >
+                        <IconArrowDown size={16} />
                       </button>
 
                       <button

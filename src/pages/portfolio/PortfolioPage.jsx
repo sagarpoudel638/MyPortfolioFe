@@ -10,7 +10,7 @@ import Modal from "../../components/ui/Modal";
 import HoldingForm from "../../components/holdings/HoldingForm";
 
 import { getDashboard } from "../../api/dashboard";
-import { createHolding, updateHolding, deleteHolding } from "../../api/holdings";
+import { createHolding, updateHolding, deleteHolding, sellHolding, mergeHoldings } from "../../api/holdings";
 
 const MARKET_META = {
   asx:    { name: "ASX",    currency: "AUD" },
@@ -35,6 +35,14 @@ export default function PortfolioPage() {
   const [deleting, setDeleting] = useState(false);
   const [watchlistTarget, setWatchlistTarget] = useState(null);
   const [addingToWatchlist, setAddingToWatchlist] = useState(false);
+
+  // Sell modal state
+  const [sellTarget, setSellTarget]   = useState(null);   // holding to sell from
+  const [sellQty, setSellQty]         = useState("");
+  const [selling, setSelling]         = useState(false);
+
+  // Merge state
+  const [merging, setMerging]         = useState(null);   // { ticker, exchange } being merged
 
   const fetchData = async () => {
     try {
@@ -81,6 +89,35 @@ export default function PortfolioPage() {
       alert(err.response?.data?.message || "Failed to delete holding");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  // ── Sell ─────────────────────────────────────────────────────────────────
+  const handleSellSubmit = async () => {
+    if (!sellTarget || !sellQty) return;
+    setSelling(true);
+    try {
+      await sellHolding(sellTarget._id, Number(sellQty));
+      setSellTarget(null);
+      setSellQty("");
+      await fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to record sale");
+    } finally {
+      setSelling(false);
+    }
+  };
+
+  // ── Merge duplicates ─────────────────────────────────────────────────────
+  const handleMerge = async (ticker, exchange) => {
+    setMerging({ ticker, exchange });
+    try {
+      await mergeHoldings(ticker, exchange);
+      await fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Merge failed");
+    } finally {
+      setMerging(null);
     }
   };
 
@@ -145,6 +182,18 @@ export default function PortfolioPage() {
         })
       : "—",
   }));
+
+  // Find tickers that appear more than once (need merging)
+  const tickerCounts = portfolioHoldings.reduce((acc, h) => {
+    const key = h.ticker || h.symbol;
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const duplicateTickers = [...new Set(
+    portfolioHoldings
+      .filter((h) => tickerCounts[h.ticker || h.symbol] > 1)
+      .map((h) => h.ticker || h.symbol)
+  )];
 
   // Prepare initial values for edit form
   const editInitial = editTarget
@@ -222,16 +271,37 @@ export default function PortfolioPage() {
         </div>
       </div>
 
+      {/* Duplicate holdings banner */}
+      {duplicateTickers.length > 0 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <p className="text-sm text-amber-300 font-medium mb-2">
+            Duplicate holdings detected — merge to get a single weighted average entry:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {duplicateTickers.map((ticker) => (
+              <button
+                key={ticker}
+                onClick={() => handleMerge(ticker, meta.name)}
+                disabled={!!merging}
+                className="px-3 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-200 text-xs font-semibold disabled:opacity-50 transition"
+              >
+                {merging?.ticker === ticker ? "Merging…" : `Merge ${ticker}`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Holdings Table */}
       <HoldingsTable
         mode="portfolio"
         holdings={portfolioHoldings}
         onEdit={handleEdit}
+        onSell={(h) => { setSellTarget(h); setSellQty(""); }}
         onDelete={(h) => setDeleteTarget(h)}
         onAddToWatchlist={(h) => {
-  console.log("watchlist target:", h);
-  setWatchlistTarget(h);
-}}
+          setWatchlistTarget(h);
+        }}
       />
 
       {/* Add / Edit Modal */}
@@ -292,6 +362,51 @@ export default function PortfolioPage() {
             loading={addingToWatchlist}
           />
         )}
+      </Modal>
+
+      {/* Sell Modal */}
+      <Modal
+        isOpen={!!sellTarget}
+        onClose={() => { setSellTarget(null); setSellQty(""); }}
+        title={`Record Sale — ${sellTarget?.ticker || sellTarget?.symbol}`}
+      >
+        <p className="text-sm text-[#8fa3bf] mb-4">
+          You currently hold{" "}
+          <span className="text-white font-semibold">{sellTarget?.qty}</span> shares.
+          Enter how many you sold.
+        </p>
+        <div className="mb-5">
+          <label className="block text-xs text-[#5d7a9a] mb-1">Shares sold</label>
+          <input
+            type="number"
+            min="0"
+            step="any"
+            value={sellQty}
+            onChange={(e) => setSellQty(e.target.value)}
+            placeholder={`Max ${sellTarget?.qty}`}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5d7a9a] focus:outline-none focus:border-[#2e82d8]"
+          />
+          {sellQty && Number(sellQty) >= Number(sellTarget?.qty) && (
+            <p className="text-xs text-amber-400 mt-1">
+              Selling all shares — this holding will be removed.
+            </p>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => { setSellTarget(null); setSellQty(""); }}
+            className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-[#8fa3bf] text-sm font-medium rounded-lg py-2.5 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSellSubmit}
+            disabled={selling || !sellQty || Number(sellQty) <= 0}
+            className="flex-1 bg-amber-500/80 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg py-2.5 transition"
+          >
+            {selling ? "Saving…" : "Confirm Sale"}
+          </button>
+        </div>
       </Modal>
 
     </AppLayout>

@@ -32,13 +32,18 @@ const SOURCES = [
     warning:  "Purchase date is not available in CommSec holdings exports — set to today's date.",
   },
   {
-    id:       "webull",
-    label:    "Webull",
-    market:   "NASDAQ / NYSE",
-    color:    "bg-cyan-500",
-    hint:     "Trade record CSV — exported from Webull account activity.",
-    steps:    ["Go to Webull → Account → Trade History", "Export as CSV (select full date range for accuracy)"],
-    warning:  null,
+    id:           "webull",
+    label:        "Webull",
+    market:       "NASDAQ / NYSE",
+    color:        "bg-cyan-500",
+    hint:         "Trade record CSV(s) — exported from Webull account activity. Upload multiple files if your history spans more than 24 months.",
+    steps:        [
+      "Go to Webull → Account → Trade History",
+      "Export as CSV — Webull limits to 24 months per export",
+      "If you have more history, export multiple date ranges and upload all files together",
+    ],
+    warning:      null,
+    multiFile:    true,
   },
   {
     id:       "native",
@@ -63,7 +68,7 @@ function Badge({ count, color, label }) {
 
 export default function ImportPage() {
   const [selectedSource, setSelectedSource] = useState(null);
-  const [file,           setFile]           = useState(null);
+  const [files,          setFiles]          = useState([]);   // array — supports Webull multi-file
   const [fileWacc,       setFileWacc]       = useState(null);
   const [dragging,       setDragging]       = useState(false);
   const [draggingWacc,   setDraggingWacc]   = useState(false);
@@ -74,26 +79,38 @@ export default function ImportPage() {
   const fileRef     = useRef();
   const fileWaccRef = useRef();
 
+  const isMultiFile = selectedSource?.multiFile;
+  const primaryFile = files[0] ?? null;
+
   // ── File handling ───────────────────────────────────────────────────────
   const handleFileDrop = useCallback((e) => {
     e.preventDefault();
     setDragging(false);
-    const dropped = e.dataTransfer?.files?.[0] || e.target?.files?.[0];
-    if (dropped && (dropped.name.endsWith(".csv") || dropped.type === "text/csv")) {
-      setFile(dropped);
-      setResult(null);
-      setError(null);
-    }
-  }, []);
+    const dropped = e.dataTransfer
+      ? Array.from(e.dataTransfer.files)
+      : Array.from(e.target?.files ?? []);
+    const csvs = dropped.filter((f) => f.name.endsWith(".csv") || f.type === "text/csv");
+    if (!csvs.length) return;
+    setFiles((prev) => {
+      if (isMultiFile) {
+        // Deduplicate by filename
+        const existing = new Set(prev.map((f) => f.name));
+        return [...prev, ...csvs.filter((f) => !existing.has(f.name))];
+      }
+      return [csvs[0]]; // single-file sources: replace
+    });
+    setResult(null);
+    setError(null);
+  }, [isMultiFile]);
 
   // ── Import ──────────────────────────────────────────────────────────────
   const handleImport = async () => {
-    if (!file) return;
+    if (!primaryFile) return;
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const { data } = await importHoldingsCSV(file, selectedSource?.id || "", fileWacc || null);
+      const { data } = await importHoldingsCSV(files, selectedSource?.id || "", fileWacc || null);
       setResult(data);
     } catch (err) {
       setError(err.response?.data?.message || "Import failed. Please check the file and try again.");
@@ -121,7 +138,7 @@ export default function ImportPage() {
   };
 
   const reset = () => {
-    setFile(null);
+    setFiles([]);
     setFileWacc(null);
     setResult(null);
     setError(null);
@@ -219,10 +236,10 @@ export default function ImportPage() {
               onDragLeave={() => setDragging(false)}
               onDrop={handleFileDrop}
               onClick={() => fileRef.current?.click()}
-              className={`relative flex flex-col items-center justify-center gap-3 h-36 rounded-xl border-2 border-dashed cursor-pointer transition ${
+              className={`relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer transition px-4 py-5 ${
                 dragging
                   ? "border-blue-400 bg-blue-500/10"
-                  : file
+                  : files.length
                   ? "border-emerald-500/50 bg-emerald-500/5"
                   : "border-white/15 hover:border-white/30 bg-[#0d1f33]"
               }`}
@@ -231,29 +248,45 @@ export default function ImportPage() {
                 ref={fileRef}
                 type="file"
                 accept=".csv,text/csv"
+                multiple={isMultiFile}
                 className="hidden"
                 onChange={handleFileDrop}
               />
-              {file ? (
-                <>
-                  <IconFileTypeCsv size={28} className="text-emerald-400" />
-                  <div className="text-center">
-                    <p className="text-sm text-white font-medium">{file.name}</p>
-                    <p className="text-xs text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setFile(null); setResult(null); }}
-                    className="absolute top-2 right-2 text-slate-500 hover:text-white"
-                  >
-                    <IconX size={14} />
-                  </button>
-                </>
+
+              {files.length > 0 ? (
+                <div className="w-full space-y-2" onClick={(e) => e.stopPropagation()}>
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
+                      <IconFileTypeCsv size={15} className="text-emerald-400 shrink-0" />
+                      <span className="text-xs text-white flex-1 truncate">{f.name}</span>
+                      <span className="text-[10px] text-slate-500 shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                      <button
+                        onClick={() => { setFiles((prev) => prev.filter((_, j) => j !== i)); setResult(null); }}
+                        className="text-slate-500 hover:text-white ml-1"
+                      >
+                        <IconX size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {isMultiFile && (
+                    <div
+                      onClick={() => fileRef.current?.click()}
+                      className="flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-white cursor-pointer py-1"
+                    >
+                      <IconUpload size={12} /> Add another file
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
                   <IconUpload size={24} className="text-slate-500" />
                   <div className="text-center">
-                    <p className="text-sm text-slate-300">Drop CSV here or click to browse</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Max 5 MB</p>
+                    <p className="text-sm text-slate-300">
+                      {isMultiFile ? "Drop CSV files here or click to browse" : "Drop CSV here or click to browse"}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {isMultiFile ? "You can select multiple files at once" : "Max 5 MB"}
+                    </p>
                   </div>
                 </>
               )}
