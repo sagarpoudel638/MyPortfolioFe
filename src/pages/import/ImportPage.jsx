@@ -14,9 +14,13 @@ const SOURCES = [
     label:    "Meroshare",
     market:   "NEPSE",
     color:    "bg-emerald-500",
-    hint:     "Transaction History CSV — exported from MeroShare portfolio.",
-    steps:    ["Go to MeroShare → My Portfolio → Transaction History", "Export as CSV"],
-    warning:  "Buy price is not available in Meroshare exports. Imported holdings will have price set to 0 — update them manually.",
+    hint:     "My Shares CSV + optional WACC Report — exported from MeroShare.",
+    steps:    [
+      "Go to MeroShare → My Shares → Download CSV  (primary file)",
+      "Optional: Go to My Purchase Source → filter Pending Scrip → add all your current scrips → go to My WACC → Download CSV",
+    ],
+    warning:  null,
+    waccSupported: true,
   },
   {
     id:       "commsec",
@@ -60,12 +64,15 @@ function Badge({ count, color, label }) {
 export default function ImportPage() {
   const [selectedSource, setSelectedSource] = useState(null);
   const [file,           setFile]           = useState(null);
+  const [fileWacc,       setFileWacc]       = useState(null);
   const [dragging,       setDragging]       = useState(false);
+  const [draggingWacc,   setDraggingWacc]   = useState(false);
   const [loading,        setLoading]        = useState(false);
   const [exporting,      setExporting]      = useState(false);
   const [result,         setResult]         = useState(null);
   const [error,          setError]          = useState(null);
-  const fileRef = useRef();
+  const fileRef     = useRef();
+  const fileWaccRef = useRef();
 
   // ── File handling ───────────────────────────────────────────────────────
   const handleFileDrop = useCallback((e) => {
@@ -86,7 +93,7 @@ export default function ImportPage() {
     setError(null);
     setResult(null);
     try {
-      const { data } = await importHoldingsCSV(file, selectedSource?.id || "");
+      const { data } = await importHoldingsCSV(file, selectedSource?.id || "", fileWacc || null);
       setResult(data);
     } catch (err) {
       setError(err.response?.data?.message || "Import failed. Please check the file and try again.");
@@ -115,6 +122,7 @@ export default function ImportPage() {
 
   const reset = () => {
     setFile(null);
+    setFileWacc(null);
     setResult(null);
     setError(null);
     setSelectedSource(null);
@@ -250,6 +258,70 @@ export default function ImportPage() {
                 </>
               )}
             </div>
+
+            {/* WACC file upload — shown only for Meroshare */}
+            {selectedSource?.waccSupported && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-slate-400">
+                    WACC Report CSV
+                    <span className="ml-1.5 bg-white/10 text-slate-400 text-[10px] px-1.5 py-0.5 rounded">Optional</span>
+                  </span>
+                  {fileWacc && (
+                    <button
+                      onClick={() => setFileWacc(null)}
+                      className="text-xs text-slate-500 hover:text-white flex items-center gap-1"
+                    >
+                      <IconX size={11} /> Remove
+                    </button>
+                  )}
+                </div>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDraggingWacc(true); }}
+                  onDragLeave={() => setDraggingWacc(false)}
+                  onDrop={(e) => {
+                    e.preventDefault(); setDraggingWacc(false);
+                    const f = e.dataTransfer?.files?.[0];
+                    if (f) { setFileWacc(f); }
+                  }}
+                  onClick={() => fileWaccRef.current?.click()}
+                  className={`flex items-center justify-center gap-3 h-14 rounded-lg border border-dashed cursor-pointer transition ${
+                    draggingWacc
+                      ? "border-emerald-400 bg-emerald-500/10"
+                      : fileWacc
+                      ? "border-emerald-500/50 bg-emerald-500/5"
+                      : "border-white/10 hover:border-white/25 bg-[#0d1f33]"
+                  }`}
+                >
+                  <input
+                    ref={fileWaccRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) setFileWacc(f); }}
+                  />
+                  {fileWacc ? (
+                    <span className="text-xs text-emerald-400 flex items-center gap-1.5">
+                      <IconFileTypeCsv size={14} /> {fileWacc.name}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      Drop WACC Report CSV here — enables automatic buy prices
+                    </span>
+                  )}
+                </div>
+                {!fileWacc && (
+                  <p className="text-[11px] text-amber-400/80 mt-1.5">
+                    Without WACC Report, buy price will be set to 0 for all NEPSE holdings.
+                  </p>
+                )}
+                {fileWacc && (
+                  <p className="text-[11px] text-emerald-400 mt-1.5">
+                    ✓ WACC Report attached — buy prices will be populated automatically.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Import button */}
             <button
