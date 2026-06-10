@@ -359,7 +359,7 @@ export default function ImportPage() {
             {/* Import button */}
             <button
               onClick={handleImport}
-              disabled={!file || loading}
+              disabled={!primaryFile || loading}
               className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#00c896] hover:bg-[#00b085] text-[#0d1f33] font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -368,7 +368,7 @@ export default function ImportPage() {
                 <><IconUpload size={16} /> Import Holdings</>
               )}
             </button>
-            {!selectedSource && file && (
+            {!selectedSource && primaryFile && (
               <p className="text-xs text-slate-500 text-center mt-2">
                 No source selected — format will be auto-detected from file headers.
               </p>
