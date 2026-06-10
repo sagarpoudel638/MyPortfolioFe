@@ -25,18 +25,20 @@ const formatCountdown = (ms) => {
   return `${seconds}s`;
 };
 
-function MarketBadge({ market, countdown }) {
+function MarketBadge({ market, countdown, compact = false }) {
   const colors  = MARKET_COLORS[market.label] || MARKET_COLORS.ASX;
   const isOpen  = market.isOpen;
 
   return (
-    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-all ${
+    <div className={`flex items-center gap-1.5 rounded-full border font-medium transition-all ${
+      compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs"
+    } ${
       isOpen
         ? "border-emerald-500/30 bg-emerald-500/10"
         : "border-white/10 bg-white/5"
     }`}>
       {/* Pulsing dot */}
-      <span className="relative flex h-1.5 w-1.5">
+      <span className="relative flex h-1.5 w-1.5 shrink-0">
         {isOpen && (
           <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${colors.open}`} />
         )}
@@ -48,12 +50,13 @@ function MarketBadge({ market, countdown }) {
         {market.label}
       </span>
 
-      {/* Status + countdown */}
+      {/* Status */}
       <span className="text-[#5d7a9a]">
         {isOpen ? "OPEN" : "CLOSED"}
       </span>
 
-      {countdown !== null && (
+      {/* Countdown — hidden in compact mode */}
+      {!compact && countdown !== null && (
         <span className={`font-mono text-[10px] ${isOpen ? "text-emerald-400" : "text-[#5d7a9a]"}`}>
           · {market.nextEventLabel} {countdown}
         </span>
@@ -108,19 +111,31 @@ export default function MarketStatusBar() {
 
   if (markets.length === 0) return null;
 
+  const renderBadges = (compact) =>
+    markets.map((market) => (
+      <MarketBadge
+        key={market.label}
+        market={market}
+        compact={compact}
+        countdown={
+          countdowns[market.label] !== undefined
+            ? formatCountdown(countdowns[market.label])
+            : null
+        }
+      />
+    ));
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {markets.map((market) => (
-        <MarketBadge
-          key={market.label}
-          market={market}
-          countdown={
-            countdowns[market.label] !== undefined
-              ? formatCountdown(countdowns[market.label])
-              : null
-          }
-        />
-      ))}
-    </div>
+    <>
+      {/* Desktop: full badges inline */}
+      <div className="hidden sm:flex items-center gap-2 flex-wrap">
+        {renderBadges(false)}
+      </div>
+
+      {/* Mobile: compact scrollable strip */}
+      <div className="flex sm:hidden items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+        {renderBadges(true)}
+      </div>
+    </>
   );
 }
