@@ -55,6 +55,7 @@ export default function Dashboard() {
         <>
           <KpiGrid
             overall={data?.overall}
+            fxRates={data?.fxRates}
             totalHoldings={allHoldings.length}
             totalMarkets={Object.keys(data?.markets || {}).length}
           />

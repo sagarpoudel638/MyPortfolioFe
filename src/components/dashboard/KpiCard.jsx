@@ -1,10 +1,12 @@
 
 
-export default function KpiCard({ title, value, sub, icon, accent }) {
+export default function KpiCard({ title, value, sub, icon, accent, loss }) {
   return (
     <div
       className={`rounded-xl border p-4 ${
-        accent
+        loss
+          ? "border-red-500/30 bg-red-500/10"
+          : accent
           ? "border-[#00c896]/30 bg-[#00c896]/10"
           : "border-white/10 bg-white/5"
       }`}
