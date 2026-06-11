@@ -1,5 +1,7 @@
 // src/components/holdings/HoldingForm.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { IconAlertTriangle, IconCheck, IconLoader2 } from "@tabler/icons-react";
+import { verifyTicker } from "../../api/prices";
 
 const MARKETS = ["ASX", "NYSE", "NASDAQ", "NEPSE"];
 
@@ -24,23 +26,49 @@ const EMPTY = {
   notes:         "",
 };
 
-export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
-  const [form, setForm] = useState(initial || EMPTY);
-  const [errors, setErrors] = useState({});
+const todayStr = () => new Date().toISOString().split("T")[0];
 
-  // When market changes, auto-fill currency
+export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
+  const [form, setForm]           = useState(initial || EMPTY);
+  const [errors, setErrors]       = useState({});
+  // ticker verification: "idle" | "checking" | "found" | "notfound"
+  const [tickerStatus, setTickerStatus] = useState("idle");
+  const verifyTimer = useRef(null);
+
+  // When market changes, auto-fill currency and reset ticker status
   useEffect(() => {
     if (form.market) {
       setForm((f) => ({
         ...f,
         currency: CURRENCY_BY_MARKET[form.market] || f.currency,
       }));
+      setTickerStatus("idle");
     }
   }, [form.market]);
 
   const set = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: null }));
+    if (field === "ticker") setTickerStatus("idle");
+  };
+
+  // Verify ticker after user stops typing (500ms debounce)
+  const handleTickerBlur = () => {
+    const ticker   = form.ticker.trim().toUpperCase();
+    const exchange = form.market;
+    if (!ticker || !exchange) return;
+
+    clearTimeout(verifyTimer.current);
+    setTickerStatus("checking");
+
+    verifyTimer.current = setTimeout(async () => {
+      try {
+        const { data } = await verifyTicker(ticker, exchange);
+        setTickerStatus(data.found ? "found" : "notfound");
+      } catch {
+        setTickerStatus("notfound");
+      }
+    }, 0); // fires immediately on blur, not on keystroke
   };
 
   const validate = () => {
@@ -50,7 +78,11 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
     if (!form.name)         e.name         = "Required";
     if (!form.qty)          e.qty          = "Required";
     if (form.buyPrice === "") e.buyPrice   = "Required";
-    if (!form.purchaseDate) e.purchaseDate = "Required";
+    if (!form.purchaseDate) {
+      e.purchaseDate = "Required";
+    } else if (form.purchaseDate > todayStr()) {
+      e.purchaseDate = "Cannot be in the future";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -59,7 +91,7 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
     e.preventDefault();
     if (!validate()) return;
     onSubmit({
-      exchange:        form.market,  // backend uses exchange as the market key
+      exchange:        form.market,
       broker:          form.broker,
       currency:        form.currency,
       ticker:          form.ticker.toUpperCase().trim(),
@@ -73,15 +105,14 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
     });
   };
 
-
   const inputClass = (field) =>
-    `w-full bg-white/5 border ${errors[field] ? "border-red-500/50" : "border-white/10"} 
-     rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#5d7a9a] 
+    `w-full bg-white/5 border ${errors[field] ? "border-red-500/50" : "border-white/10"}
+     rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#5d7a9a]
      focus:outline-none focus:border-[#2e82d8] transition`;
 
   const selectClass = (field) =>
-    `w-full bg-[#162741] border ${errors[field] ? "border-red-500/50" : "border-white/10"} 
-     rounded-lg px-3 py-2 text-xs text-white 
+    `w-full bg-[#162741] border ${errors[field] ? "border-red-500/50" : "border-white/10"}
+     rounded-lg px-3 py-2 text-xs text-white
      focus:outline-none focus:border-[#2e82d8] transition`;
 
   const Label = ({ children, error }) => (
@@ -92,6 +123,27 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
       {error && <span className="text-[10px] text-red-400">{error}</span>}
     </div>
   );
+
+  // Ticker status icon + badge
+  const TickerStatusBadge = () => {
+    if (tickerStatus === "idle")     return null;
+    if (tickerStatus === "checking") return (
+      <span className="flex items-center gap-1 text-[10px] text-[#5d7a9a]">
+        <IconLoader2 size={11} className="animate-spin" /> Checking…
+      </span>
+    );
+    if (tickerStatus === "found") return (
+      <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+        <IconCheck size={11} /> Verified
+      </span>
+    );
+    if (tickerStatus === "notfound") return (
+      <span className="flex items-center gap-1 text-[10px] text-amber-400">
+        <IconAlertTriangle size={11} /> Not found in price source
+      </span>
+    );
+    return null;
+  };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -127,14 +179,33 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
       {/* Row 2: Ticker + Name */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label error={errors.ticker}>Ticker</Label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[11px] font-semibold text-[#8fa3bf] uppercase tracking-wide">
+              Ticker
+            </label>
+            <div className="flex items-center gap-2">
+              <TickerStatusBadge />
+              {errors.ticker && (
+                <span className="text-[10px] text-red-400">{errors.ticker}</span>
+              )}
+            </div>
+          </div>
           <input
             type="text"
             value={form.ticker}
             onChange={(e) => set("ticker", e.target.value.toUpperCase())}
+            onBlur={handleTickerBlur}
             placeholder="e.g. NABIL"
-            className={inputClass("ticker")}
+            className={`${inputClass("ticker")} ${
+              tickerStatus === "notfound" ? "border-amber-500/40" : ""
+            }`}
           />
+          {tickerStatus === "notfound" && (
+            <p className="text-[10px] text-amber-400 mt-1 flex items-center gap-1">
+              <IconAlertTriangle size={10} />
+              Price data not found — you can still save, but live tracking may not work.
+            </p>
+          )}
         </div>
 
         <div>
@@ -194,6 +265,7 @@ export default function HoldingForm({ initial, onSubmit, onCancel, loading }) {
         <input
           type="date"
           value={form.purchaseDate}
+          max={todayStr()}
           onChange={(e) => set("purchaseDate", e.target.value)}
           className={inputClass("purchaseDate")}
           style={{ colorScheme: "dark" }}
